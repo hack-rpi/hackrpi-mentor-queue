@@ -50,10 +50,23 @@ const inQueue = async (docKey) => {
 
         // Ensures that the document is retrieved properly
         if (!doc.exists) { console.log('No such document!');}
-        else {
-        // below commented is a log function that could help error check
-        // console.log('Document data:', doc.data());
-            return doc.data().helped;
-        }
+        else {return doc.data().helped;}
     } catch (error) {console.error('Error retrieving document:', error);}
+};
+
+// A function to fetch the data of a document, i.e., the student in the queue.
+// It takes in a document key.
+const fetchDoc = async (docKey) => {
+    try {
+        // Grabs the document
+        const ans = await db.collection('requests').doc(docKey);
+        console.log(ans.data());
+        // Returns the data of that documen
+        if (!ans.exists) { console.log('No such document!');}
+        else {
+            // below commented is a log function that could help error check
+            // console.log('Document data:', doc.data());
+            return ans.data();
+        }
+    } catch (error) {console.error('Error retrieving individual doc:', error);}
 };
