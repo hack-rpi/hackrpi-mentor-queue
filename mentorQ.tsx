@@ -55,27 +55,57 @@ const fetchDoc = async (docKey) => {
     } catch (error) {console.error('Error retrieving individual doc:', error);}
 };
 
-// helps the student
-const queueOut = async (docKey) => {
+
+const getAverageWaitTime = async () => {
     try {
-      // Create a reference to the student's document using the provided docKey
-      const docRef = db.collection('requests').doc(docKey);
+      const requestsCollection = collection(db, 'requests');
+      const querySnapshot = await getDocs(requestsCollection);
   
-      // Check if the "helped" field is already true
-      const docSnapshot = await docRef.get();
-      const data = docSnapshot.data();
+      let totalWaitTime = 0;
+      let totalStudents = 0;
   
-      if (data && data.helped) {alert('This student has already been helped.');} 
-      else {
-        // Set the "helped" field to true
-        await docRef.set({helped: true});
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const addedTimestamp = data.addedTimestamp; // Timestamp when student was added to the queue
+        const helpedTimestamp = data.helpedTimestamp; // Timestamp when student was helped
+  
+        if (addedTimestamp && helpedTimestamp) {
+          // Calculate the time spent in the queue in milliseconds
+          const waitTime = helpedTimestamp - addedTimestamp;
+  
+          // Add the wait time to the total
+          totalWaitTime += waitTime;
+          totalStudents++;
+        }
+      });
+  
+      if (totalStudents === 0) {console.log('No data available to calculate average wait time.');}
+      else{
+        // Calculate the average wait time in minutes
+        const averageWaitTime = totalWaitTime / (totalStudents * 60000); // Convert milliseconds to minutes
+        console.log(`Average Wait Time: ${averageWaitTime.toFixed(2)} minutes`);
       }
-    } catch (error) {console.error('Error claiming queue:', error);}
+    } catch (error) {
+      console.error('Error calculating average wait time:', error);
+    }
 };
 
 /*-------------------------------------------------------------------------
 Not super nessesary below
 -------------------------------------------------------------------------*/
+// Gets the total number of students in the queue.
+const getTotalStudentsInQueue = async () => {
+    try {
+        const requestsCollection = collection(db, 'requests');
+        const querySnapshot = await getDocs(requestsCollection);
+        const totalStudents = querySnapshot.size;
+        console.log(`Total Students in Queue: ${totalStudents}`);
+        return totalStudents;
+    } catch (error) {
+        console.error('Error calculating total students in queue:', error);
+        return 0;
+    }
+};
 
 // This function checks whether a student is in the queue based on the document key.
 // It returns whether the student has been helped or not.
