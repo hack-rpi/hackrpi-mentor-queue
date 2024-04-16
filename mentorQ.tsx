@@ -89,10 +89,58 @@ const getAverageWaitTime = async () => {
       console.error('Error calculating average wait time:', error);
     }
 };
-
+/*-------------------------------------------------------------------------
+data logger below
+-------------------------------------------------------------------------*/
+const getQueueStatistics = async () => {
+    try {
+      const totalStudentsPromise = getTotalStudentsInQueue();
+      getAverageWaitTime();
+  
+      const [totalStudents] = await Promise.all([
+        totalStudentsPromise,
+      ]);
+  
+      console.log(`Total Students in Queue: ${totalStudents}`);
+    } catch (error) {
+      console.error('Error in getQueueStatistics:', error);
+    }
+};
 /*-------------------------------------------------------------------------
 Not super nessesary below
 -------------------------------------------------------------------------*/
+
+const getTimeSinceLastHelped = async (studentId) => {
+    try {
+      // Fetch the student's document using the studentId
+      const studentDoc = await db.collection('students').doc(studentId).get();
+  
+      if (!studentDoc.exists) {
+        console.log('No such student found!');
+        return;
+      }
+  
+      const studentData = studentDoc.data();
+      const lastHelpedTimestamp = studentData.lastHelpedTimestamp; // Assuming this is the field where the last helped timestamp is stored
+  
+      if (!lastHelpedTimestamp) {
+        console.log('This student has not been helped before.');
+        return;
+      }
+  
+      // Current timestamp
+      const now = new Date().getTime();
+  
+      // Calculate the time since the student was last helped in minutes
+      const timeSinceLastHelped = (now - lastHelpedTimestamp.toMillis()) / 60000; // Convert from milliseconds to minutes
+  
+      console.log(`Time since last helped: ${timeSinceLastHelped.toFixed(2)} minutes`);
+      return timeSinceLastHelped.toFixed(2); // Return the time in minutes, rounded to 2 decimal places
+    } catch (error) {
+      console.error('Error in getTimeSinceLastHelped:', error);
+    }
+  };
+
 // Gets the total number of students in the queue.
 const getTotalStudentsInQueue = async () => {
     try {
